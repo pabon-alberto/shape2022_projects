@@ -1,7 +1,11 @@
 """
 Maze visualizer 
 
+Starter Code:
 @author: Daniel Bauer 
+
+Finished Code:
+@author: Alberto Pabón
 """
 
 from tkinter import *
