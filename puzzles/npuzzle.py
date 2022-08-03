@@ -126,8 +126,8 @@ def bfs(next_state):
                         returnls_state = [prev_state] + returnls_state
                         state = prev_state
                     returnls_action = returnls_action[1:len(returnls_action)]
-                    print(returnls_action)
-                    print(total_visited_states)
+                    # print(returnls_action)
+                    # print(total_visited_states)
                     return(returnls_action)
         # total_visited_states +=1     
 
@@ -182,8 +182,8 @@ def dfs(state):
                         returnls_state = [prev_state] + returnls_state
                         state = prev_state
                     returnls_action = returnls_action[1:len(returnls_action)]
-                    print(returnls_action)
-                    print(total_visited_states)
+                    # print(returnls_action)
+                    # print(total_visited_states)
                     return(returnls_action)
     
                 
@@ -194,7 +194,14 @@ def misplaced_heuristic(state):
     """
     Returns the number of misplaced tiles.
     """
-    return 0 # replace this
+    index = 0
+    misplaced = 0
+    for i in range(len(state)):
+        for j in range(len(state[i])):
+            if state[i][j] != index:
+                misplaced += 1
+                index += 1
+    return misplaced # replace this
 
 
 def manhattan_heuristic(state):
@@ -202,8 +209,17 @@ def manhattan_heuristic(state):
     For each misplaced tile, compute the manhattan distance between the current
     position and the goal position. THen sum all distances. 
     """
-
-    return 0 # replace this
+    total_dist = 0
+    for i in range(len(state)): #y coordinate
+        for j in range(len(state[i])): #x coordinate
+            index = state[i][j]
+            if index != 0:
+                correctX = index%3
+                correctY = index//3
+                distance = abs(j - correctX) + abs(i - correctY)
+                total_dist += distance
+                
+    return total_dist # replace this
 
 
 def greedy(state, heuristic = misplaced_heuristic):
@@ -217,15 +233,53 @@ def greedy(state, heuristic = misplaced_heuristic):
 
     # You might want to use these functions to maintain a priority queue
     # You may also use your own heap class here
-    from heapq import heappush
-    from heapq import heappop
-
-    parents = {}
     actions = {}
     costs = {}
+    prev = {}
 
     costs[state] = 0
 
+    discovered = set()
+    discovered.add(state)
+    stack = []
+    stack.append(state)
+    discovered.add(state)
+    ori_state = state #Starting state
+
+    total_visited_states = 0
+    while len(stack) > 0:
+        curr_state = stack.pop()
+        successors = get_successors(curr_state)
+        successors.sort(key = lambda tup:heuristic(tup[1]), reverse = True)
+
+        for element in successors:
+            next_action = element[0]
+            state = element[1]
+            if state not in discovered:
+                total_visited_states += 1
+                discovered.add(state)
+                stack.append(state)
+                prev[state] = curr_state
+                if state in actions:
+                    actions[state] = element
+                else:
+                    actions[state] = next_action
+                if goal_test(state):
+                    prev_state = prev[state]
+                    prev_action = actions[state]
+                    returnls_state = [prev_state]
+                    returnls_action = [prev_action]
+                    while state != ori_state:
+                        prev_state = prev.get(state)
+                        prev_action = actions.get(prev_state)
+                        returnls_action = [prev_action] + returnls_action
+                        returnls_state = [prev_state] + returnls_state
+                        state = prev_state
+                    returnls_action = returnls_action[1:len(returnls_action)]
+                    # print(returnls_action)
+                    # print(total_visited_states)
+                    return(returnls_action)
+    
     # Write best first search here.
 
     return None # No solution found
@@ -235,26 +289,66 @@ def best_first(state, heuristic = misplaced_heuristic):
     """
     Breadth first search using the heuristic function passed as a parameter.
     Returns: A list of actions
-    Shoudl print: the number of states visited, and the maximum size of the frontier.  
+    Should print: the number of states visited, and the maximum size of the frontier.  
     """
 
-    # You might want to use these functions to maintain a priority queue
+    # You might want to use these functions to maintain a priority queue 
     # You may also use your own heap class here
     from heapq import heappush
     from heapq import heappop
 
-    parents = {}
+    heap = []
+    
+    heappush(heap, (heuristic(state), state))
     actions = {}
-    costs = {}
-
-    costs[state] = 0
 
     # Write best first search here.
+    
+    prev = {}
 
-    return None # No solution found
+    discovered = set()
+    discovered.add(state)
+    ori_state = state
+
+    total_visited_states = 0
+    while len(heap) > 0:
+        n, curr_state = heappop(heap) #n is the number, curr_state is the state
+        successors = get_successors(curr_state)
+
+        for element in successors:
+            next_action = element[0]
+            state = element[1]
+            if state not in discovered:
+                total_visited_states += 1
+                discovered.add(state)
+                heappush(heap, (heuristic(state), state))
+                prev[state] = curr_state
+                if state in actions:
+                    actions[state] = element
+                else:
+                    actions[state] = next_action
+                if goal_test(state):
+                    state = state
+                    prev_state = prev[state]
+                    prev_action = actions[state]
+                    returnls_state = [prev_state]
+                    returnls_action = [prev_action]
+                    while state != ori_state:
+                        prev_state = prev.get(state)
+                        prev_action = actions.get(prev_state)
+                        returnls_action = [prev_action] + returnls_action
+                        returnls_state = [prev_state] + returnls_state
+                        state = prev_state
+                    returnls_action = returnls_action[1:len(returnls_action)]
+                    # print(returnls_action)
+                    # print(total_visited_states)
+                    return(returnls_action)
+        # total_visited_states +=1     
+   #print("Total visited states:", total_visited_states)
 
 
-def astar(state, heuristic = misplaced_heuristic):
+
+def astar(state, heuristic): #If heuristic is admissible, A* search is optimal.
     """
     A-star search using the heuristic function passed as a parameter. 
     Returns: A list of actions
@@ -266,7 +360,6 @@ def astar(state, heuristic = misplaced_heuristic):
     from heapq import heappush
     from heapq import heappop
 
-    parents = {}
     actions = {}
     costs = {}
 
@@ -274,7 +367,52 @@ def astar(state, heuristic = misplaced_heuristic):
     
     # Write A* search here
 
-    return None # No solution found
+    heap = []
+    
+    heappush(heap, (heuristic(state) + costs[state], state))
+    actions = {}
+
+    # Write best first search here.
+    
+    prev = {}
+    discovered = set()
+    discovered.add(state)
+    ori_state = state
+
+    total_visited_states = 0
+    while len(heap) > 0:
+        n, curr_state = heappop(heap) #n is the number, curr_state is the state
+        successors = get_successors(curr_state)
+        for element in successors:
+            next_action = element[0]
+            state = element[1]
+            if state not in discovered:
+                total_visited_states += 1
+                discovered.add(state)
+                costs[state] = costs[curr_state] + 1
+                heappush(heap, (heuristic(state) + costs[state], state))
+                prev[state] = curr_state
+                if state in actions:
+                    actions[state] = element
+                else:
+                    actions[state] = next_action
+                if goal_test(state):
+                    state = state
+                    prev_state = prev[state]
+                    prev_action = actions[state]
+                    returnls_state = [prev_state]
+                    returnls_action = [prev_action]
+                    while state != ori_state:
+                        prev_state = prev.get(state)
+                        prev_action = actions.get(prev_state)
+                        returnls_action = [prev_action] + returnls_action
+                        returnls_state = [prev_state] + returnls_state
+                        state = prev_state
+                    returnls_action = returnls_action[1:len(returnls_action)]
+                    # print(returnls_action) #prints list of actions
+                    # print(total_visited_states) # prints number of total visited areas
+                    return(returnls_action)
+
 
 
 def print_result(solution):
@@ -286,30 +424,32 @@ def print_result(solution):
     else: 
         print("Solution has {} actions.".format(len(solution)))
 
-
-
 if __name__ == "__main__":
 
     #Easy test case
     test_state = ((1, 4, 2),
                   (0, 5, 8), 
-                  (3, 6, 7))  
+                  (3, 6, 7)) 
 
     #More difficult test case
     # test_state = ((7, 2, 4),
-    #              (5, 0, 6), 
-    #              (8, 3, 1))  
-
+    #              (8, 3, 1),
+    #              (5, 0, 6))
+    
     print(state_to_string(test_state))
     print()
 
+    print("Misplaced:", misplaced_heuristic(test_state))
+    print('\n====Manhattan====\n'+'Distance from original state:', manhattan_heuristic(test_state))
+    
     print("====BFS====")
     start = time.time()
-    solution = bfs(test_state) #
+    solution = bfs(test_state) 
     end = time.time()
     print_result(solution)
     print("Total time: {0:.3f}s".format(end-start))
 
+    
     print() 
     print("====DFS====") 
     start = time.time()
@@ -318,10 +458,10 @@ if __name__ == "__main__":
     print_result(solution)
     print("Total time: {0:.3f}s".format(end-start))
 
-
+    print()
     print("====Greedy====") 
     start = time.time()
-    solution = greedy(test_state, misplaced_heuristic)
+    solution = greedy(test_state, manhattan_heuristic)
     end = time.time()
     print_result(solution)
     print("Total time: {0:.3f}s".format(end-start))
@@ -330,7 +470,7 @@ if __name__ == "__main__":
     print() 
     print("====Best-First====") 
     start = time.time()
-    solution = best_first(test_state, misplaced_heuristic)
+    solution = best_first(test_state, manhattan_heuristic)
     end = time.time()
     print_result(solution)
     print("Total time: {0:.3f}s".format(end-start))
@@ -338,10 +478,7 @@ if __name__ == "__main__":
     print() 
     print("====A*====") 
     start = time.time()
-    solution = astar(test_state, misplaced_heuristic)
+    solution = astar(test_state, manhattan_heuristic)
     end = time.time()
     print_result(solution)
     print("Total time: {0:.3f}s".format(end-start))
-
-
-
