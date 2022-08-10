@@ -1,8 +1,6 @@
-from email import policy
-from multiprocessing import current_process
 import random
 import sys
-
+import math
 
 class FrozenLake(object):
 
@@ -123,29 +121,29 @@ class FrozenLake(object):
             current_pro += probability
             if current_pro > r:
                 return coordinate
-        return None # TODO 
+        return 
     
     def get_random_policy(self):
         """
         Generate a random policy.
         """
         directions = ['n', 's', 'e', 'w']
-        ran_policy = {}
+        policy = {}
         
         
         for x in range(self.width):
             for y in range(self.height):
-                    ran_policy[(x,y)] = random.choice(directions)
-        return ran_policy # TODO
+                    policy[(x,y)] = random.choice(directions)
+        return policy # TODO
 
-    def simple_policy_rollout(self, ran_policy):
+    def simple_policy_rollout(self, policy):
         """
         Return True if a random trial with this policy is successful.  
         """
         
         position = self.initial_state
         while True:
-            position = self.move(position, ran_policy[position])
+            position = self.move(position, policy[position])
             
             if position in self.targets:
                 return True
@@ -158,29 +156,68 @@ class FrozenLake(object):
     def evaluate_policy(self, policy, t=100):
         """
         Return the percentage of successful trials within t random trials with
-        this policy.
+        this policy.  
         """
-        return 0.0 # TODO
+        complete = 0
+        failure = 0
+        
+        for i in range(t):
+            if self.simple_policy_rollout(policy):
+                complete += 1
+            else:
+                failure += 1
+        percentage = complete/(complete+failure)        
+        
+        return(percentage)
     
     def value_iteration(self, epsilon = 0.001):
         """
         The value iteration algorithm to iteratively compute an optimal
         utility function.
         """
-        return {} # TODO
+        utility = self.get_initial_utility_function()
+        
+        best = False
+        directions = ['n', 's', 'e', 'w']
+        
+        terminated = False 
+        while not terminated:
+            new_utility = self.get_initial_utility_function()
+            terminated = True
+            for x in range(self.width):
+                for y in range(self.height):
+                        state = (x, y)
+                        reward = self.get_reward(state)
+                        best_direction_sum = -math.inf
+                        for direction in directions:
+                            sum_total = 0
+                            for (new_state, prob) in self.get_transitions(state, direction):
+                                sum_total += prob * utility[new_state]
+                            if sum_total > best_direction_sum:
+                                best_direction_sum = sum_total
+                        new_value = self.get_reward(state) + self.gamma * best_direction_sum
+                        if abs(new_value - utility[state]) > (epsilon*(1-self.gamma)/self.gamma):
+                             terminated = False
+                        new_utility[state] = new_value 
+            utility = new_utility 
+        return utility
 
     def extract_policy(self, utility_function):
         """
         Given a utility function, return the best policy. 
         """
+        
+        
         return {} # 
 
 if __name__ == "__main__":
    
     # Create a lake simulation 
     lake = FrozenLake(width=8,height=8, targets=[(3,4)], blocked = [(3,3),(2,3),(2,4), ], holes=[(4,0),(4,1),(3,0),(3,1), (6,4),(6,5),(0,7),(0,6),(1,7)], start=(0,0))
-    lake.get_random_policy()
-    lake.print_map()
+    
+    policy = lake.get_random_policy()
+    print(lake.evaluate_policy(policy))
+    lake.print_map(policy)
     
 
     
