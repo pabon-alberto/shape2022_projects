@@ -1,6 +1,6 @@
 ![shape](https://outreach.engineering.columbia.edu/sites/default/files/styles/cu_crop/public/content/shape%20logo%202.jpg?itok=8WWH6QQr)
 
-# Shape Projects
+# Shape Projects - Adv. Computer Science Class
 
 
 
